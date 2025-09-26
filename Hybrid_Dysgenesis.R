@@ -87,7 +87,7 @@ ggplot(df_25_filtered, aes(x = cross, y = Prop_Dysgenic)) +
 
 # Experiment 2
 
-df_e2 <- read.csv("/Users/ascarpa/Transib1_Hybrid_Dysgenesis/Transib1_Hybrid_Dysgenesis-Experiment_2.csv", stringsAsFactors = FALSE) %>%
+df_e2 <- read.csv("/Users/almorscarpa/Downloads/Transib1-HD/Transib1_Hybrid_Dysgenesis-Experiment_2.csv", stringsAsFactors = FALSE) %>%
   mutate(cross = paste0(sub("x.*", "", ID), "_F x ", sub(".*x", "", sub("_.*", "", ID)), "_M"))
 
 order <- c("Har_F x Dmel68_M", "Dmel68_F x Har_M", 
