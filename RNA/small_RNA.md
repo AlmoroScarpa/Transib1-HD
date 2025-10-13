@@ -1,27 +1,13 @@
 small_RNA
 ================
 Matthew Beaumont
-2025-10-09
+2025-10-13
 
 # piRNA distribution
 
 ``` r
 library(ggplot2)
 library(dplyr)
-```
-
-    ## 
-    ## Attaching package: 'dplyr'
-
-    ## The following objects are masked from 'package:stats':
-    ## 
-    ##     filter, lag
-
-    ## The following objects are masked from 'package:base':
-    ## 
-    ##     intersect, setdiff, setequal, union
-
-``` r
 library(scales)
 library(tidyr)
  
@@ -63,19 +49,11 @@ p <- ggplot(pirna_dist_fil) +
     panel.spacing = unit(0.1, "lines"),
     legend.position = "none"
   )
+
+p
 ```
 
-    ## Warning: The `size` argument of `element_rect()` is deprecated as of ggplot2 3.4.0.
-    ## ℹ Please use the `linewidth` argument instead.
-    ## This warning is displayed once every 8 hours.
-    ## Call `lifecycle::last_lifecycle_warnings()` to see where this warning was
-    ## generated.
-
-``` r
-print(p)
-```
-
-![](small_RNA_files/figure-gfm/unnamed-chunk-1-1.png)<!-- -->
+![](small_RNA_files/figure-gfm/pirna_dist-1.png)<!-- -->
 
 ``` r
 file <- "hobo_pirna_dist"
@@ -83,11 +61,7 @@ file <- "hobo_pirna_dist"
 ggsave(paste0("figs/", file, ".png"), plot = p, width = 8, height = 4, dpi = 400)
 ggsave(paste0("figs/", file, ".svg"), plot = p, width = 8, height = 4)
 ggsave(paste0("figs/", file, ".eps"), plot = p, width = 8, height = 4)
-
-knitr::include_graphics(paste0("figs/", file, ".png"))
 ```
-
-<img src="figs/hobo_pirna_dist.png" width="3200" />
 
 # Pingpong
 
@@ -130,61 +104,23 @@ pp <- ggplot(pingpong_fil, aes(x = Position, y = Normalised,
     legend.position = "none"
   )
 
-print(pp)
+pp
 ```
 
-    ## Warning: Removed 16 rows containing missing values or values outside the scale range
-    ## (`geom_bar()`).
-
-![](small_RNA_files/figure-gfm/unnamed-chunk-2-1.png)<!-- -->
+![](small_RNA_files/figure-gfm/pingpong-1.png)<!-- -->
 
 ``` r
 file <- "hobo_pingpong"
 
 ggsave(paste0("figs/", file, ".png"), plot = pp, width = 8, height = 4, dpi = 400)
-```
-
-    ## Warning: Removed 16 rows containing missing values or values outside the scale range
-    ## (`geom_bar()`).
-
-``` r
 ggsave(paste0("figs/", file, ".svg"), plot = pp, width = 8, height = 4)
-```
-
-    ## Warning: Removed 16 rows containing missing values or values outside the scale range
-    ## (`geom_bar()`).
-
-``` r
 ggsave(paste0("figs/", file, ".eps"), plot = pp, width = 8, height = 4)
 ```
-
-    ## Warning: Removed 16 rows containing missing values or values outside the scale range
-    ## (`geom_bar()`).
-
-``` r
-knitr::include_graphics(paste0("figs/", file, ".png"))
-```
-
-<img src="figs/hobo_pingpong.png" width="3200" />
 
 # Pingpong comp
 
 ``` r
 library(tidyverse)
-```
-
-    ## ── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──
-    ## ✔ forcats   1.0.0     ✔ readr     2.1.5
-    ## ✔ lubridate 1.9.4     ✔ stringr   1.5.1
-    ## ✔ purrr     1.0.2     ✔ tibble    3.2.1
-    ## ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
-    ## ✖ readr::col_factor() masks scales::col_factor()
-    ## ✖ purrr::discard()    masks scales::discard()
-    ## ✖ dplyr::filter()     masks stats::filter()
-    ## ✖ dplyr::lag()        masks stats::lag()
-    ## ℹ Use the conflicted package (<http://conflicted.r-lib.org/>) to force all conflicts to become errors
-
-``` r
 library(ggrepel)
 
 pp <- read.table("/Volumes/Temp/almoRNA/sRNA/results/pingpong/all/all_pingpong_fixed.txt", header = FALSE)
@@ -238,20 +174,16 @@ sp <- ggplot(pp_mean, aes(x = TEN015, y = TOM008)) +
     axis.line = element_blank()
   )
 
-plot(sp)
+sp
 ```
 
-![](small_RNA_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
+![](small_RNA_files/figure-gfm/pingpong_zscores-1.png)<!-- -->
 
 ``` r
 ggsave("figs/pingpong_zscores.png", plot = sp, width = 8, height = 4, dpi = 400)
 ggsave("figs/pingpong_zscores.svg", plot = sp, width = 8, height = 4)
 ggsave("figs/pingpong_zscores.eps", plot = sp, width = 8, height = 4)
-
-knitr::include_graphics("figs/pingpong_zscores.png")
 ```
-
-<img src="figs/pingpong_zscores.png" width="3200" />
 
 # piRNA abundance
 
@@ -282,20 +214,16 @@ pab <- ggplot(pa_fil, aes(x = SampleID, y = Normalised)) +
         axis.text.x = element_text(angle = 45, hjust = 1)
       )
 
-plot(pab)
+pab
 ```
 
-![](small_RNA_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
+![](small_RNA_files/figure-gfm/pirna_abundance-1.png)<!-- -->
 
 ``` r
 ggsave("figs/hobo_pirna_abundance.png", plot = pab, width = 8, height = 4, dpi = 400)
 ggsave("figs/hobo_pirna_abundance.svg", plot = pab, width = 8, height = 4)
 ggsave("figs/hobo_pirna_abundance.eps", plot = pab, width = 8, height = 4)
-
-knitr::include_graphics("figs/hobo_pirna_abundance.png")
 ```
-
-<img src="figs/hobo_pirna_abundance.png" width="3200" />
 
 # TE specific piRNA comparison
 
@@ -306,6 +234,7 @@ library(ggrepel)
 pa <- read.table("/Volumes/Temp/almoRNA/sRNA/results/pirna_comp/all/all_pirna_abu_fixed.txt", header = FALSE, sep = "\t")
 colnames(pa) <- c("SampleID", "TE", "RNA", "Count", "Normalised")
 
+# "p-element_dna/p" "hobo_dna/hat" "transib_riccardo"
 
 pa_fil <- pa %>%
   mutate(TE = sub("_.*", "", TE)) %>%
@@ -322,73 +251,65 @@ pa_fil <- pa %>%
     TE = case_when(
       TE == "transib" ~ "transib1 (consensus)",
       TE == "transib1" ~ "transib1 (degraded)",
+      TE == "p-element" ~ "P-element",
+      TE == "hobo" ~ "Hobo",
       TRUE ~ TE
     )
   ) %>%
   mutate(
     ratio = pmax(TEN015, TOM008) / pmin(TEN015, TOM008),
-    outlier = ratio > 10
+    outlier = ratio > 10,
+    label_this = outlier | TE %in% c("P-element", "Hobo")
   )
 
-sp <- ggplot(pa_fil, aes(x = TEN015, y = TOM008)) +
-  geom_point(size = 1, color = "steelblue4") +
-  geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "red3") +
+label_data <- pa_fil %>% filter(label_this)
+
+sp <- ggplot(pa_fil, aes(x = `TEN015`, y = `TOM008`)) +
+  geom_point(aes(color = label_this), size = 1) +
+  scale_color_manual(values = c("FALSE" = "grey60", "TRUE" = "firebrick3")) +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "black") +
   geom_text_repel(
-    data = subset(pa_fil, outlier),
-    aes(label = TE),
-    size = 4,
-    color = "black",
+    data = label_data,
+    aes(label = TE, color = label_this),
+    size = 3,
     box.padding = 0.3,
     point.padding = 0.2,
-    segment.color = "grey50"
+    segment.color = "grey50",
+    show.legend = FALSE
   ) +
-  scale_x_log10(limits = c(1, max(pa_fil$TEN015) * 1.1)) +
-  scale_y_log10(limits = c(1, max(pa_fil$TOM008) * 1.1)) +
+  scale_x_log10(
+    limits = c(1, max(pa_fil$TENfxTOMm) * 1.1),
+    breaks = trans_breaks("log10", function(x) 10^x),
+    labels = label_number()
+  ) +
+  scale_y_log10(
+    limits = c(1, max(pa_fil$TOMfxTENm) * 1.1),
+    breaks = trans_breaks("log10", function(x) 10^x),
+    labels = label_number()
+  ) +
   labs(
-    x = "TEN015 piRNAs (per million piRNAs)",
-    y = "TOM008 piRNAs (per million piRNAs)"
+    x = "TOMmTENf piRNAs (per million piRNAs)",
+    y = "TENmTOMf piRNAs (per million piRNAs)",
+    color = "Labeled TE"
   ) +
   theme_minimal(base_size = 14) +
   theme(
     panel.grid = element_blank(),
     panel.border = element_rect(color = "black", fill = NA, linewidth = 0.8),
-    axis.line = element_blank()
+    axis.line = element_blank(),
+    legend.position = "none"  # remove legend if not needed
   )
 
-plot(sp)
+sp
 ```
 
-    ## Warning: Removed 1 row containing missing values or values outside the scale range
-    ## (`geom_point()`).
-
-![](small_RNA_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
+![](small_RNA_files/figure-gfm/pirna_comp-1.png)<!-- -->
 
 ``` r
 ggsave("figs/pirna_comp.png", plot = sp, width = 8, height = 4, dpi = 400)
-```
-
-    ## Warning: Removed 1 row containing missing values or values outside the scale range
-    ## (`geom_point()`).
-
-``` r
 ggsave("figs/pirna_comp.svg", plot = sp, width = 8, height = 4)
-```
-
-    ## Warning: Removed 1 row containing missing values or values outside the scale range
-    ## (`geom_point()`).
-
-``` r
 ggsave("figs/pirna_comp.eps", plot = sp, width = 8, height = 4)
 ```
-
-    ## Warning: Removed 1 row containing missing values or values outside the scale range
-    ## (`geom_point()`).
-
-``` r
-knitr::include_graphics("figs/pirna_comp.png")
-```
-
-<img src="figs/pirna_comp.png" width="3200" />
 
 ``` r
 library(tidyverse)
@@ -399,11 +320,15 @@ pa <- read.table("/Volumes/Temp/almoRNA/sRNA/results/pirna_comp/all/all_pirna_ab
                  header = FALSE, sep = "\t")
 colnames(pa) <- c("SampleID", "TE", "RNA", "Count", "Normalised")
 
+# "p-element_dna/p" "hobo_dna/hat" "transib_riccardo"
+
 pa <- pa %>%
   mutate(TE = sub("_.*", "", TE)) %>%
   mutate(TE = case_when(
     TE == "transib" ~ "transib1 (consensus)",
     TE == "transib1" ~ "transib1 (degraded)",
+    TE == "p-element" ~ "P-element",
+    TE == "hobo" ~ "Hobo",
     TRUE ~ TE
   ))
 
@@ -425,20 +350,23 @@ pa_mean <- pa_fil %>%
   filter(`TENfxTOMm` > 0 & `TOMfxTENm` > 0) %>%
   mutate(
     ratio = pmax(`TENfxTOMm`, `TOMfxTENm`) / pmin(`TENfxTOMm`, `TOMfxTENm`),
-    outlier = ratio > 5
+    outlier = ratio > 5,
+    label_this = outlier | TE %in% c("P-element", "Hobo")
   )
+label_data <- pa_mean %>% filter(label_this)
 
 sp <- ggplot(pa_mean, aes(x = `TENfxTOMm`, y = `TOMfxTENm`)) +
-  geom_point(size = 1, color = "steelblue4") +
-  geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "red3") +
+  geom_point(aes(color = label_this), size = 1) +
+  scale_color_manual(values = c("FALSE" = "grey60", "TRUE" = "firebrick3")) +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "black") +
   geom_text_repel(
-    data = subset(pa_mean, outlier),
-    aes(label = TE),
-    size = 4,
-    color = "black",
+    data = label_data,
+    aes(label = TE, color = label_this),
+    size = 3,
     box.padding = 0.3,
     point.padding = 0.2,
-    segment.color = "grey50"
+    segment.color = "grey50",
+    show.legend = FALSE
   ) +
   scale_x_log10(
     limits = c(1, max(pa_mean$TENfxTOMm) * 1.1),
@@ -452,46 +380,26 @@ sp <- ggplot(pa_mean, aes(x = `TENfxTOMm`, y = `TOMfxTENm`)) +
   ) +
   labs(
     x = "TOMmTENf piRNAs (per million piRNAs)",
-    y = "TENmTOMf piRNAs (per million piRNAs)"
+    y = "TENmTOMf piRNAs (per million piRNAs)",
+    color = "Labeled TE"
   ) +
   theme_minimal(base_size = 14) +
   theme(
     panel.grid = element_blank(),
     panel.border = element_rect(color = "black", fill = NA, linewidth = 0.8),
-    axis.line = element_blank()
+    axis.line = element_blank(),
+    legend.position = "none"  # remove legend if not needed
   )
 
-plot(sp)
+sp
 ```
 
-    ## Warning: Removed 1 row containing missing values or values outside the scale range
-    ## (`geom_point()`).
-
-![](small_RNA_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
+![](small_RNA_files/figure-gfm/pirna_comp_rc-1.png)<!-- -->
 
 ``` r
 ggsave("figs/pirna_comp_rc.png", plot = sp, width = 8, height = 4, dpi = 400)
-```
-
-    ## Warning: Removed 1 row containing missing values or values outside the scale range
-    ## (`geom_point()`).
-
-``` r
 ggsave("figs/pirna_comp_rc.svg", plot = sp, width = 8, height = 4)
-```
-
-    ## Warning: Removed 1 row containing missing values or values outside the scale range
-    ## (`geom_point()`).
-
-``` r
 ggsave("figs/pirna_comp_rc.eps", plot = sp, width = 8, height = 4)
+
+#knitr::include_graphics("figs/pirna_comp_rc.png")
 ```
-
-    ## Warning: Removed 1 row containing missing values or values outside the scale range
-    ## (`geom_point()`).
-
-``` r
-knitr::include_graphics("figs/pirna_comp_rc.png")
-```
-
-<img src="figs/pirna_comp_rc.png" width="3200" />
