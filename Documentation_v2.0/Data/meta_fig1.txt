@@ -1,0 +1,7 @@
+Strain	lat	long
+Dmel68	32	35
+Harwich	42	-70
+AKA018	62	29
+TEN015	28	-17
+COR018	38	-3
+TOM008	39	-3	
