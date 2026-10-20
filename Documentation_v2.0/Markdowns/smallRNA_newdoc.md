@@ -1,0 +1,494 @@
+smallRNA_analysis
+================
+2026-09-21
+
+Trimming: performed after pastForward did initial cleaning and merging
+of reads.
+
+    for i in *.gz; do cutadapt -a AACTGTAGGCACCATCAAT -m 18 -M 35 --cores 25 -o ../trimmed_merged_reads/"$i" "$i" ;done
+
+Mapping to the reference library which contained the Dmel transcriptome
+(DM 6.62 and a library of all known TE families) using bowtie
+
+    bowtie-build trnscrpts_tes.fa trnscrpts_tes
+
+    for i in *.fastq; do base=$(basename "$i" .fastq);bowtie -v 1 -a -p 20 --best --strata -S -x ../trnscrpts_tes "$i" |samtools sort -O SAM -@ 20 -o ../mapped/"$base".sorted.sam;done
+
+Software used for downstream analysis: smallRNA tools
+(<https://github.com/MBeaum/small_RNA_tools/>)
+
+Estimating piRNA abundance:
+
+    for i in *.sam; do base=$(basename "$i" sorted.sam); python ~/small_RNA_tools/scripts/smallRNA_composition_alt.py --sam "$i" --refID ../trnscrpts_tes_lib.txt --sid "$base" >> piRNA_abu_new.txt ;done
+
+Computing the mapping distribution across each transposon sequence:
+
+    for i in *.sam; do base=$(basename "$i" sorted.sam); python ~/small_RNA_tools/scripts/piRNA_distribution.py --sam "$i" --refID ../trnscrpts_tes_lib.txt --sid "$base" >> piRNA_dist_new.txt ;done
+
+Scan for ping-pong signature:
+
+    for i in *.sam; do base=$(basename "$i" sorted.sam); python ~/small_RNA_tools/scripts/pingpong.py --sam "$i" --refID ../trnscrpts_tes_lib.txt --sid "$base" >> pingpong.txt ;done
+
+\#Abundance estimation
+
+Version 2
+
+``` r
+library(tidyverse)
+```
+
+    ## ── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──
+    ## ✔ dplyr     1.2.1     ✔ readr     2.2.0
+    ## ✔ forcats   1.0.1     ✔ stringr   1.6.0
+    ## ✔ ggplot2   4.0.3     ✔ tibble    3.3.1
+    ## ✔ lubridate 1.9.5     ✔ tidyr     1.3.2
+    ## ✔ purrr     1.2.2     
+    ## ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+    ## ✖ dplyr::filter() masks stats::filter()
+    ## ✖ dplyr::lag()    masks stats::lag()
+    ## ℹ Use the conflicted package (<http://conflicted.r-lib.org/>) to force all conflicts to become errors
+
+``` r
+library(ggrepel)
+library(scales) 
+```
+
+    ## 
+    ## Attaching package: 'scales'
+    ## 
+    ## The following object is masked from 'package:purrr':
+    ## 
+    ##     discard
+    ## 
+    ## The following object is masked from 'package:readr':
+    ## 
+    ##     col_factor
+
+``` r
+piab<- read_tsv("/home/anna/transib_ana/miRNA_ana/mapped/piRNA_abu_new.txt",col_names =c("SampleID", "TE", "RNA", "Count", "Normalised"))%>%
+  filter(RNA=="pirna")%>%
+  mutate(SampleID=case_when(SampleID=="345108"~"TEN015",
+                             SampleID=="345109"~"TOM008",
+                             SampleID=="345110"~"TEN♀TOM♂_R1",
+                             SampleID=="345111"~"TEN♀TOM♂_R2",
+                             SampleID=="345112"~"TEN♀TOM♂_R3",
+                             SampleID=="345113"~"TOM♀TEN♂_R1",
+                             SampleID=="345114"~"TOM♀TEN♂_R2",
+                             SampleID=="345115"~"TOM♀TEN♂_R3"))%>%
+  mutate(TE = sub("_.*", "", TE),
+        SampleGroup = sub("_.*", "", SampleID))%>%
+  mutate(TE = case_when(
+    TE == "transib" ~ "Transib1 (canonical)",
+    TE == "transib1" ~ "Transib1 (background)",
+    TE == "p-element" ~ "P-element",
+    TE == "hobo" ~ "Hobo",
+    TRUE ~ TE
+  ))
+```
+
+    ## Rows: 220836 Columns: 5
+    ## ── Column specification ────────────────────────────────────────────────────────
+    ## Delimiter: "\t"
+    ## chr (2): TE, RNA
+    ## dbl (3): SampleID, Count, Normalised
+    ## 
+    ## ℹ Use `spec()` to retrieve the full column specification for this data.
+    ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+
+``` r
+#write_tsv(piab,file="/home/anna/transib_ana/miRNA_ana/new_ab_est.txt")
+```
+
+Parent abundance plot:
+
+``` r
+parent_comp <- piab %>%
+  filter(SampleGroup%in%c("TEN015","TOM008"))%>%
+  group_by(SampleGroup, TE) %>%
+  summarise(Normalised = mean(Normalised), .groups = "drop")%>%
+  pivot_wider(
+    id_cols = TE,
+    names_from = SampleGroup,
+    values_from = Normalised,
+    values_fill = 0
+  ) %>%
+  filter(`TEN015` > 0 & `TOM008` > 0) %>%
+  mutate(
+    ratio = pmax(`TEN015`, `TOM008`) / pmin(`TEN015`, `TOM008`),
+    outlier = ratio > 10,
+    label_this = outlier | TE %in% c("P-element", "Hobo",
+                                     "Transib1 (canonical)",
+                                    "Transib1 (background)"))
+
+label_pc <- parent_comp %>% filter(label_this)
+
+pc_plot <- ggplot(parent_comp, aes(x = `TEN015`, y = `TOM008`)) +
+  geom_point(aes(color = label_this,alpha = label_this), size = 2) +
+  scale_color_manual(values = c("FALSE" = "grey60", "TRUE" = "firebrick3")) +
+  scale_alpha_manual(values = c("FALSE" = 0.4, "TRUE" = 1)) +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "black") +
+  geom_text_repel(
+    data = label_pc,
+    aes(label = TE, color = label_this),
+    size = 5,
+    box.padding = 0.3,
+    point.padding = 0.2,
+    segment.color = "grey50",
+    show.legend = FALSE
+  ) +
+  scale_x_log10(
+    limits = c(1, max(parent_comp$`TEN015`) * 1.1),
+    breaks = trans_breaks("log10", function(x) 10^x),
+    labels = label_number()
+  ) +
+  scale_y_log10(
+    limits = c(1, max(parent_comp$`TOM008`) * 1.1),
+    breaks = trans_breaks("log10", function(x) 10^x),
+    labels = label_number()
+  ) +
+  labs(
+    x = "TEN015 piRNAs (per million piRNAs)",
+    y = "TOM008 piRNAs (per million piRNAs)",
+    color = "Labeled TE"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    panel.grid = element_blank(),
+    panel.border = element_rect(color = "black", fill = NA, linewidth = 0.8),
+    axis.line = element_blank(),
+    legend.position = "none")
+    
+pc_plot
+```
+
+    ## Warning: Removed 3 rows containing missing values or values outside the scale range
+    ## (`geom_point()`).
+
+![](smallRNA_newdoc_files/figure-gfm/unnamed-chunk-2-1.png)<!-- -->
+Offspring abundance plot:
+
+``` r
+offspring_comp <- piab %>%
+  filter(SampleGroup%in%c("TEN♀TOM♂","TOM♀TEN♂"))%>%
+  group_by(SampleGroup, TE) %>%
+  summarise(Normalised = mean(Normalised), .groups = "drop") %>%
+  pivot_wider(
+    id_cols = TE,
+    names_from = SampleGroup,
+    values_from = Normalised,
+    values_fill = 0
+  ) %>%
+  filter(`TEN♀TOM♂` > 0 & `TOM♀TEN♂` > 0) %>%
+  mutate(
+    ratio = pmax(`TEN♀TOM♂`, `TOM♀TEN♂`) / pmin(`TEN♀TOM♂`, `TOM♀TEN♂`),
+    outlier = ratio > 10,
+    label_this = outlier | TE %in% c("P-element", "Hobo",
+                                     "Transib1 (canonical)",
+                                    "Transib1 (background)"))
+
+label_oc <- offspring_comp %>% filter(label_this)
+
+oc_plot <- ggplot(offspring_comp, aes(x = `TEN♀TOM♂`, y = `TOM♀TEN♂`)) +
+  geom_point(aes(color = label_this,alpha = label_this), size = 2) +
+  scale_color_manual(values = c("FALSE" = "grey60", "TRUE" = "firebrick3")) +
+  scale_alpha_manual(values = c("FALSE" = 0.4, "TRUE" = 1)) +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "black") +
+  geom_text_repel(
+    data = label_oc,
+    aes(label = TE, color = label_this),
+    size = 5,
+    box.padding = 0.3,
+    point.padding = 0.2,
+    segment.color = "grey50",
+    show.legend = FALSE
+  ) +
+  scale_x_log10(
+    limits = c(1, max(offspring_comp$`TEN♀TOM♂`) * 1.1),
+    breaks = trans_breaks("log10", function(x) 10^x),
+    labels = label_number()
+  ) +
+  scale_y_log10(
+    limits = c(1, max(offspring_comp$`TOM♀TEN♂`) * 1.1),
+    breaks = trans_breaks("log10", function(x) 10^x),
+    labels = label_number()
+  ) +
+  labs(
+    x = "TEN♀TOM♂ piRNAs (per million piRNAs)",
+    y = "TOM♀TEN♂ piRNAs (per million piRNAs)",
+    color = "Labeled TE"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    panel.grid = element_blank(),
+    panel.border = element_rect(color = "black", fill = NA, linewidth = 0.8),
+    axis.line = element_blank(),
+    legend.position = "none",
+    theme(text = element_text(family = "DejaVu Sans")
+  ))
+oc_plot
+```
+
+    ## Warning: Removed 4 rows containing missing values or values outside the scale range
+    ## (`geom_point()`).
+
+![](smallRNA_newdoc_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
+Saving the abundance plots:
+
+``` r
+#ggsave(pc_plot,file="/home/anna/transib_ana/miRNA_ana/TOM_TEN_piRNA_comp.pdf",width=7,height=7)
+#ggsave(oc_plot,file="/home/anna/transib_ana/miRNA_ana/TOM_TEN_F1_piRNA_comp.pdf",
+#       width=7,height=7,
+#       device = cairo_pdf)
+```
+
+\#piRNA distribution Version 2
+
+``` r
+library(ggplot2)
+library(dplyr)
+library(scales)
+library(tidyr)
+ 
+pirna_dist <- read_tsv("/home/anna/transib_ana/miRNA_ana/mapped/piRNA_dist_new.txt",
+                       col_names= c("SampleID", "TE", "strand", "pos", "count"))%>%
+   mutate(SampleID=case_when(SampleID=="345108"~"TEN015",
+                             SampleID=="345109"~"TOM008",
+                             SampleID=="345110"~"TEN♀TOM♂_R1",
+                             SampleID=="345111"~"TEN♀TOM♂_R2",
+                             SampleID=="345112"~"TEN♀TOM♂_R3",
+                             SampleID=="345113"~"TOM♀TEN♂_R1",
+                             SampleID=="345114"~"TOM♀TEN♂_R2",
+                             SampleID=="345115"~"TOM♀TEN♂_R3"),
+          TE=as.factor(sub("_.*", "", TE)))%>%
+  mutate(TE = case_when(
+    TE == "transib" ~ "Transib1 (canonical)",
+    TE == "transib1" ~ "Transib1 (background)",
+    TE == "p-element" ~ "P-element",
+    TE == "hobo" ~ "Hobo",
+    TRUE ~ TE
+  ))
+```
+
+    ## Rows: 3148566 Columns: 5
+    ## ── Column specification ────────────────────────────────────────────────────────
+    ## Delimiter: "\t"
+    ## chr (2): TE, strand
+    ## dbl (3): SampleID, pos, count
+    ## 
+    ## ℹ Use `spec()` to retrieve the full column specification for this data.
+    ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+
+``` r
+pirna_dist_fil <- pirna_dist %>%
+  filter(TE == "Transib1 (canonical)"|TE=="Transib1 (background)")
+
+pirna_dist_fil <- pirna_dist_fil %>%
+  mutate(count = ifelse(strand == "-", -count, count))
+
+
+max_count <- max(abs(pirna_dist_fil$count))
+
+pirna_dist_fil$SampleID<-factor(pirna_dist_fil$SampleID,
+                                levels = c("TEN015","TEN♀TOM♂_R1","TEN♀TOM♂_R2","TEN♀TOM♂_R3",
+                                           "TOM008","TOM♀TEN♂_R1","TOM♀TEN♂_R2","TOM♀TEN♂_R3"))
+
+bg <- ggplot(subset(pirna_dist_fil,TE=="Transib1 (background)")) +
+  geom_segment(aes(x = 3030-pos, xend = 3030-pos, y = 0, yend = count), color = "dimgrey") +
+  geom_hline(yintercept = 0, color = "black") +
+  scale_x_continuous(breaks = c(1, 1000, 2000, 3000),
+                     limits = c(1,3100)) +
+  scale_y_continuous(breaks = c(-300,-200,-100,0,100,200,300),
+                     limits = c(-300, 300))+
+  labs(
+    title = NULL,
+    x = "position",
+    y = "counts (per million piRNAs)"
+  ) +
+  facet_wrap(~ SampleID, scales = "fixed", ncol = 4) +
+  theme_minimal() +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_rect(color = "black", fill = NA, size = 1),
+    strip.background = element_rect(fill = "grey80", color = "black"),
+    strip.text = element_text(size = 10),
+    panel.spacing = unit(0.1, "lines"),
+    legend.position = "none"
+  )
+```
+
+    ## Warning: The `size` argument of `element_rect()` is deprecated as of ggplot2 3.4.0.
+    ## ℹ Please use the `linewidth` argument instead.
+    ## This warning is displayed once per session.
+    ## Call `lifecycle::last_lifecycle_warnings()` to see where this warning was
+    ## generated.
+
+``` r
+can <- ggplot(subset(pirna_dist_fil,TE=="Transib1 (canonical)")) +
+  geom_segment(aes(x = 3030-pos, xend = 3030-pos, y = 0, yend = count), color = "dimgrey") +
+  geom_hline(yintercept = 0, color = "black") +
+  scale_x_continuous(breaks = c(1, 1000, 2000, 3000),
+                     limits = c(1,3100)) +
+  scale_y_continuous(breaks = c(-300,-200,-100,0,100,200,300),
+                     limits = c(-300, 300))+
+  labs(
+    title = NULL,
+    x = "position",
+    y = "counts (per million piRNAs)"
+  ) +
+  facet_wrap(~ SampleID, scales = "fixed", ncol = 4) +
+  theme_minimal() +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_rect(color = "black", fill = NA, size = 1),
+    strip.background = element_rect(fill = "grey80", color = "black"),
+    strip.text = element_text(size = 10),
+    panel.spacing = unit(0.1, "lines"),
+    legend.position = "none"
+  )
+
+bg
+```
+
+![](smallRNA_newdoc_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
+
+``` r
+can
+```
+
+    ## Warning: Removed 6 rows containing missing values or values outside the scale range
+    ## (`geom_segment()`).
+
+![](smallRNA_newdoc_files/figure-gfm/unnamed-chunk-5-2.png)<!-- -->
+
+``` r
+#ggsave(bg,file="/home/anna/transib_ana/miRNA_ana/transib_background_piRNA_dist.pdf",
+#       width=8,height=4,dpi=400,
+#        device = cairo_pdf)
+#ggsave(can,file="/home/anna/transib_ana/miRNA_ana/transib_canonical_piRNA_dist.pdf",
+#       width=8,height=4,dpi=400,
+#        device = cairo_pdf)
+```
+
+\#Ping-Pong signature
+
+Version 2
+
+``` r
+library(ggplot2)
+library(tidyr)
+library(dplyr)
+
+pingpong <- read_tsv(file="/home/anna/transib_ana/miRNA_ana/mapped/pingpong.txt",
+                     col_names = c("SampleID", "TE", "Strand", "Position",
+                                   "Count", "Normalised", "Zscore"))%>%
+  filter(SampleID!="sid")%>%
+   mutate(SampleID=case_when(SampleID=="345108."~"TEN015",
+                             SampleID=="345109."~"TOM008",
+                             SampleID=="345110."~"TEN♀TOM♂_R1",
+                             SampleID=="345111."~"TEN♀TOM♂_R2",
+                             SampleID=="345112."~"TEN♀TOM♂_R3",
+                             SampleID=="345113."~"TOM♀TEN♂_R1",
+                             SampleID=="345114."~"TOM♀TEN♂_R2",
+                             SampleID=="345115."~"TOM♀TEN♂_R3"),
+          TE=as.factor(sub("_.*", "", TE)))%>%
+  mutate(TE = case_when(
+    TE == "transib" ~ "Transib1 (canonical)",
+    TE == "transib1" ~ "Transib1 (background)",
+    TE == "p-element" ~ "P-element",
+    TE == "hobo" ~ "Hobo",
+    TRUE ~ TE
+  ))
+```
+
+    ## Rows: 39528 Columns: 7
+    ## ── Column specification ────────────────────────────────────────────────────────
+    ## Delimiter: "\t"
+    ## chr (7): SampleID, TE, Strand, Position, Count, Normalised, Zscore
+    ## 
+    ## ℹ Use `spec()` to retrieve the full column specification for this data.
+    ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+
+``` r
+pingpong_fil <- pingpong %>%
+  filter(TE == "Transib1 (canonical)"| TE=="Transib1 (background)",
+           Strand=="+")%>%
+  mutate(Position=as.numeric(Position),Normalised=as.numeric(Normalised))
+
+pingpong_fil$SampleID<-factor(pingpong_fil$SampleID,
+                                levels =c("TEN015","TEN♀TOM♂_R1","TEN♀TOM♂_R2","TEN♀TOM♂_R3",
+                                           "TOM008","TOM♀TEN♂_R1","TOM♀TEN♂_R2","TOM♀TEN♂_R3"))
+
+
+bg_pp <- ggplot(subset(pingpong_fil,TE=="Transib1 (background)"), aes(x = Position, y = Normalised,
+                           fill = Position == 10)) +
+  geom_bar(stat = "identity", position = "stack", color = "black") +
+  scale_fill_manual(values = c("FALSE" = "grey", "TRUE" = "red3")) +
+  scale_y_continuous(breaks = c(0, 0.5), limits = c(0, 0.7)) +
+  scale_x_continuous(breaks = c(1, 10, 19), limits = c(1, 19)) +
+  geom_hline(yintercept = 0, color = "black") +
+  facet_wrap(~ SampleID, scales = "fixed", ncol = 4) +
+  labs(title = NULL,
+       x = "position",
+       y = "normalised count") +
+  theme_minimal() +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_rect(color = "black", fill = NA, size = 1),
+    strip.background = element_rect(fill = "grey80", color = "black"),
+    strip.text = element_text(size = 10),
+    panel.spacing = unit(0.1, "lines"),
+    legend.position = "none"
+  )
+
+can_pp <- ggplot(subset(pingpong_fil,TE=="Transib1 (canonical)"), aes(x = Position, y = Normalised,
+                           fill = Position == 10)) +
+  geom_bar(stat = "identity", position = "stack", color = "black") +
+  scale_fill_manual(values = c("FALSE" = "grey", "TRUE" = "red3")) +
+  scale_y_continuous(breaks = c(0, 0.5), limits = c(0, 0.7)) +
+  scale_x_continuous(breaks = c(1, 10, 19), limits = c(1, 19)) +
+  geom_hline(yintercept = 0, color = "black") +
+  facet_wrap(~ SampleID, scales = "fixed", ncol = 4) +
+  labs(title = NULL,
+       x = "position",
+       y = "normalised count") +
+  theme_minimal() +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_rect(color = "black", fill = NA, size = 1),
+    strip.background = element_rect(fill = "grey80", color = "black"),
+    strip.text = element_text(size = 10),
+    panel.spacing = unit(0.1, "lines"),
+    legend.position = "none"
+  )
+
+
+bg_pp
+```
+
+    ## Warning: Removed 16 rows containing missing values or values outside the scale range
+    ## (`geom_bar()`).
+
+![](smallRNA_newdoc_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
+
+``` r
+can_pp
+```
+
+    ## Warning: Removed 16 rows containing missing values or values outside the scale range
+    ## (`geom_bar()`).
+
+![](smallRNA_newdoc_files/figure-gfm/unnamed-chunk-7-2.png)<!-- -->
+
+``` r
+#ggsave(bg_pp,file="/home/anna/transib_ana/miRNA_ana/transib_background_pingpong.pdf",
+#       width=8,height=4,dpi=400,
+#      device = cairo_pdf)
+
+#ggsave(can_pp,file="/home/anna/transib_ana/miRNA_ana/transib_canonical_pingpong.pdf",
+#       width=8,height=4,dpi=400,
+#       device = cairo_pdf)
+```
