@@ -1,6 +1,6 @@
 ---
 title: "Transcriptome Analysis"
-output: html_document
+output: github_document
 date: "2026-10-20"
 ---
 
@@ -40,7 +40,7 @@ cat *_as.txt > all_as.txt
 library(ggpubr)
 library(tidyverse)
 
-all_cov<-read_tsv(file="/home/anna/transib_ana/RNA_reanalysis/star_new/vis_prep/transib/merged_cov.txt",
+all_cov<-read_tsv(file="/home/anna/transib_ana/Transib1-HD/Documentation_v2.0/Data/transib_merged_cov.txt",
                    col_names =c("sample_id","strand","te","pos","cov"))%>%
   mutate(sample_id=gsub("m", "♂", sample_id),
          sample_id=gsub("f","♀",sample_id))%>%
@@ -50,7 +50,7 @@ all_cov<-read_tsv(file="/home/anna/transib_ana/RNA_reanalysis/star_new/vis_prep/
 sense<-all_cov%>%filter(strand=="se")
 antisense<-all_cov%>%filter(strand=="ase")
 
-all_spli<-read_tsv(file = "/home/anna/transib_ana/RNA_reanalysis/star_new/vis_prep/transib/merged_as.txt",
+all_spli<-read_tsv(file = "/home/anna/transib_ana/Transib1-HD/Documentation_v2.0/Data/transib_merged_as.txt",
                     col_names=c("sample_id","strand","te","skey","start","end","rawcount","freq"))%>%
   mutate(sample_id=gsub("m", "♂", sample_id),
          sample_id=gsub("f","♀",sample_id))%>%
@@ -99,7 +99,7 @@ for i in stringtie/*.gtf;do ~/TransDecoder-TransDecoder-v6.0.0/TransDecoder --ge
 
 Plotting the abundance of the different transcripts:
 ```{r}
-tframe<-read_tsv("/home/anna/transib_ana/RNA_reanalysis/star_new/stringtie/transib_only/transcript_summary.tsv")%>%
+tframe<-read_tsv("/home/anna/transib_ana/Transib1-HD/Documentation_v2.0/Data/transcript_summary.tsv")%>%
   mutate(strain=gsub("f","♀",strain))%>%
   mutate(strain=gsub("m","♂",strain))
 

@@ -1,13 +1,13 @@
 ---
 title: "Transib General Plots"
-output: html_document
+output: github_document
 date: "2026-10-20"
 ---
 
 Worldmap for figure 1:
 ```{r,fig.width=8,fig.height = 6}
 library(tidyverse)
-meta<-read_tsv(file="/home/anna/transib_ana/Figures4paper/meta_fig1.txt")
+meta<-read_tsv(file="/home/anna/transib_ana/Transib1-HD/Documentation_v2.0/Data/meta_fig1.txt")
 
 world_map <- map_data("world") %>% filter(region != "Antarctica")%>%filter(lat>=10 & lat <80 ,long<100&long>-100)
 
@@ -27,7 +27,7 @@ sampl_map
 TE-CN plots for figure 1:
 
 ````{r,fig.width=8,fig.height=6}
-fig1_cnest<-read_csv(file="/home/anna/transib_ana/sr_Almo/deviate_analysis/summary.csv")%>%
+fig1_cnest<-read_csv(file="/home/anna/transib_ana/Transib1-HD/Documentation_v2.0/Data/deviate_summary.csv")%>%
   mutate(Sample=gsub("Almo_","",Sample),HQ_reads=as.numeric(HQ_reads))%>%
   filter(Sample!="Sample")%>%
   select(-All_reads)%>%
@@ -75,7 +75,7 @@ HD plot for figure 1:
 library(ggpubr)
 order_ACTT<-c("Aka018♀ x Cor018♂","Cor018♀ x Aka018♂","Ten015♀ x Tom008♂","Tom008♀ x Ten015♂")
 
-ACTT_alltemps<-read_csv(file="/home/anna/transib_ana/Transib1_Hybrid_Dysgenesis_Experiment.csv")%>%
+ACTT_alltemps<-read_csv(file="/home/anna/transib_ana/Transib1-HD/Documentation_v2.0/Data/Transib1_Hybrid_Dysgenesis_Experiment.csv")%>%
   mutate(cross = paste0(sub("x.*", "", ID), "♀ x ", sub(".*x", "", sub("_.*", "", ID)), "♂"))%>%
   mutate(cross = factor(cross, levels = order_ACTT),
          Temperature=paste0(Temperature,"° C"))
@@ -112,7 +112,7 @@ order_DHTT <- c("Har♀ x Dmel68♂", "Dmel68♀ x Har♂",
            "Har♀ x Tom008♂", "Tom008♀ x Har♂", 
            "Har♀ x Ten015♂", "Ten015♀ x Har♂")
 
-transib_21deg<-read_csv(file="/home/anna/transib_ana/Transib1_HD_21.csv")%>%
+transib_21deg<-read_csv(file="/home/anna/transib_ana/Transib1-HD/Documentation_v2.0/Data/Transib1_HD_21.csv")%>%
   mutate(cross = paste0(sub("x.*", "", ID), "♀ x ", sub(".*x", "", sub("_.*", "", ID)), "♂"))%>%
   mutate(cross = factor(cross, levels = order_DHTT),
          Temperature=paste0(`Temperature °C`,"° C"))
@@ -153,7 +153,7 @@ order_HKCG <- c("Harwich♀ x KIE094♂", "KIE094♀ x Harwich♂",
            "Harwich♀ x COR014♂", "COR014♀ x Harwich♂", 
            "Harwich♀ x GIM024♂", "GIM024♀ x Harwich♂")
 
-wild_21_29deg<-read_csv(file="/home/anna/transib_ana/Wild_strains.csv")%>%
+wild_21_29deg<-read_csv(file="/home/anna/transib_ana/Transib1-HD/Documentation_v2.0/Data/Wild_strains.csv")%>%
   mutate(cross = paste0(Female, "♀ x ", Male, "♂"))%>%
   mutate(cross = factor(cross, levels = order_HKCG),
          Temperature=paste0(`Temperature °C`,"° C"))%>%
@@ -186,7 +186,7 @@ HKCG_plot
 
 Wild-cross HD plot for figure 4:
 ```{r, fig.width=10,fig.height=10}
-wc_ana<-read_tsv(file="/home/anna/transib_ana/Rosella_wild_crosses.tsv")%>%
+wc_ana<-read_tsv(file="/home/anna/transib_ana/Transib1-HD/Documentation_v2.0/Data/Rosella_wild_crosses.tsv")%>%
   arrange(cross_ID)%>%
   pivot_longer(cols = c(prop_dys,prop_wild),names_to = "phenotype",values_to = "prop")%>%
   mutate(phenotype=ifelse(phenotype=="prop_dys","dysgenic","wild type"))
