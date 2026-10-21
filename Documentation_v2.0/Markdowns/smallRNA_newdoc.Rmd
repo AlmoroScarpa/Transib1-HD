@@ -1,6 +1,6 @@
 ---
 title: "smallRNA_analysis"
-output: html_document
+output: github_document
 date: "2026-09-21"
 ---
 
@@ -48,7 +48,7 @@ library(tidyverse)
 library(ggrepel)
 library(scales) 
 
-piab<- read_tsv("/home/anna/transib_ana/miRNA_ana/mapped/piRNA_abu_new.txt",col_names =c("SampleID", "TE", "RNA", "Count", "Normalised"))%>%
+piab<-read_tsv("/home/anna/transib_ana/Transib1-HD/Documentation_v2.0/Data/piRNA_abu_new.txt",col_names =c("SampleID", "TE", "RNA", "Count", "Normalised"))%>%
   filter(RNA=="pirna")%>%
   mutate(SampleID=case_when(SampleID=="345108"~"TEN015",
                              SampleID=="345109"~"TOM008",
@@ -208,8 +208,8 @@ library(dplyr)
 library(scales)
 library(tidyr)
  
-pirna_dist <- read_tsv("/home/anna/transib_ana/miRNA_ana/mapped/piRNA_dist_new.txt",
-                       col_names= c("SampleID", "TE", "strand", "pos", "count"))%>%
+pirna_dist <- read.table(gzfile("/home/anna/transib_ana/Transib1-HD/Documentation_v2.0/Data/piRNA_dist_new.txt.gz"),
+                       col.names= c("SampleID", "TE", "strand", "pos", "count"))%>%
    mutate(SampleID=case_when(SampleID=="345108"~"TEN015",
                              SampleID=="345109"~"TOM008",
                              SampleID=="345110"~"TEN♀TOM♂_R1",
@@ -311,7 +311,7 @@ library(ggplot2)
 library(tidyr)
 library(dplyr)
 
-pingpong <- read_tsv(file="/home/anna/transib_ana/miRNA_ana/mapped/pingpong.txt",
+pingpong <- read_tsv(file="/home/anna/transib_ana/Transib1-HD/Documentation_v2.0/Data/pingpong.txt",
                      col_names = c("SampleID", "TE", "Strand", "Position",
                                    "Count", "Normalised", "Zscore"))%>%
   filter(SampleID!="sid")%>%

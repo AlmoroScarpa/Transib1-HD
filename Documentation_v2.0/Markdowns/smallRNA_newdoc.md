@@ -65,7 +65,7 @@ library(scales)
     ##     col_factor
 
 ``` r
-piab<- read_tsv("/home/anna/transib_ana/miRNA_ana/mapped/piRNA_abu_new.txt",col_names =c("SampleID", "TE", "RNA", "Count", "Normalised"))%>%
+piab<-read_tsv("/home/anna/transib_ana/Transib1-HD/Documentation_v2.0/Data/piRNA_abu_new.txt",col_names =c("SampleID", "TE", "RNA", "Count", "Normalised"))%>%
   filter(RNA=="pirna")%>%
   mutate(SampleID=case_when(SampleID=="345108"~"TEN015",
                              SampleID=="345109"~"TOM008",
@@ -249,8 +249,8 @@ library(dplyr)
 library(scales)
 library(tidyr)
  
-pirna_dist <- read_tsv("/home/anna/transib_ana/miRNA_ana/mapped/piRNA_dist_new.txt",
-                       col_names= c("SampleID", "TE", "strand", "pos", "count"))%>%
+pirna_dist <- read.table(gzfile("/home/anna/transib_ana/Transib1-HD/Documentation_v2.0/Data/piRNA_dist_new.txt.gz"),
+                       col.names= c("SampleID", "TE", "strand", "pos", "count"))%>%
    mutate(SampleID=case_when(SampleID=="345108"~"TEN015",
                              SampleID=="345109"~"TOM008",
                              SampleID=="345110"~"TEN♀TOM♂_R1",
@@ -267,18 +267,8 @@ pirna_dist <- read_tsv("/home/anna/transib_ana/miRNA_ana/mapped/piRNA_dist_new.t
     TE == "hobo" ~ "Hobo",
     TRUE ~ TE
   ))
-```
 
-    ## Rows: 3148566 Columns: 5
-    ## ── Column specification ────────────────────────────────────────────────────────
-    ## Delimiter: "\t"
-    ## chr (2): TE, strand
-    ## dbl (3): SampleID, pos, count
-    ## 
-    ## ℹ Use `spec()` to retrieve the full column specification for this data.
-    ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
 
-``` r
 pirna_dist_fil <- pirna_dist %>%
   filter(TE == "Transib1 (canonical)"|TE=="Transib1 (background)")
 
@@ -380,7 +370,7 @@ library(ggplot2)
 library(tidyr)
 library(dplyr)
 
-pingpong <- read_tsv(file="/home/anna/transib_ana/miRNA_ana/mapped/pingpong.txt",
+pingpong <- read_tsv(file="/home/anna/transib_ana/Transib1-HD/Documentation_v2.0/Data/pingpong.txt",
                      col_names = c("SampleID", "TE", "Strand", "Position",
                                    "Count", "Normalised", "Zscore"))%>%
   filter(SampleID!="sid")%>%
